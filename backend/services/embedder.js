@@ -1,9 +1,33 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import dotenv from 'dotenv';
 
-function assertGeminiKey() {
+dotenv.config();
+
+let genAIInstance = null;
+let embeddingModelInstance = null;
+
+// List of embedding models to try in order
+const EMBEDDING_MODELS = [
+  'gemini-embedding-001',
+  'gemini-embedding-2-preview',
+  'text-embedding-004'
+];
+
+function getEmbeddingModel() {
+  if (embeddingModelInstance) return embeddingModelInstance;
+
   if (!process.env.GEMINI_API_KEY) {
     throw new Error('Missing GEMINI_API_KEY in environment.');
   }
+
+  // Initialize with GoogleGenerativeAI
+  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+  genAIInstance = genAI;
+  
+  // Return the genAI instance since we'll call getGenerativeModel directly
+  embeddingModelInstance = genAI;
+  
+  return embeddingModelInstance;
 }
 
 function isRetryable(err) {
@@ -32,11 +56,6 @@ async function withRetries(fn, { retries = 3, initialDelayMs = 500 } = {}) {
   throw lastErr;
 }
 
-assertGeminiKey();
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const embeddingModel = genAI.getGenerativeModel({ model: 'text-embedding-004' });
-
 export async function embedText(text) {
   if (typeof text !== 'string') {
     throw new Error('embedText: text must be a string.');
@@ -47,16 +66,74 @@ export async function embedText(text) {
     throw new Error('embedText: text is empty after trimming.');
   }
 
-  const result = await withRetries(() =>
-    embeddingModel.embedContent(input)
-  );
+  let lastError;
+  
+  // Try each embedding model in order
+  for (const modelName of EMBEDDING_MODELS) {
+    try {
+      console.log(`Trying embedding model: ${modelName}`);
+      
+      // Create a new GenAI instance for each attempt
+      const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+      
+      let result;
+      try {
+        const embeddingModel = genAI.getGenerativeModel({ model: modelName });
+        result = await withRetries(() => {
+          return embeddingModel.embedContent({
+            content: { parts: [{ text: input }] },
+          });
+        });
+      } catch (sdkErr) {
+        console.error(`SDK failed for model ${modelName}:`, sdkErr.message);
+        
+        // Try direct REST API call as fallback
+        try {
+          result = await withRetries(async () => {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:embedContent?key=${process.env.GEMINI_API_KEY}`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                model: `models/${modelName}`,
+                content: {
+                  parts: [{ text: input }]
+                }
+              })
+            });
+            
+            if (!response.ok) {
+              const errorText = await response.text();
+              throw new Error(`HTTP error! status: ${response.status}, body: ${errorText}`);
+            }
+            
+            return await response.json();
+          });
+        } catch (apiErr) {
+          console.error(`Direct API also failed for model ${modelName}:`, apiErr.message);
+          throw apiErr;
+        }
+      }
 
-  const values = result?.embedding?.values;
-  if (!Array.isArray(values) || values.length === 0) {
-    throw new Error('Gemini embedding returned no values.');
+      // Handle both SDK and API response formats
+      const values = result?.embeddings?.[0]?.values || result?.embedding?.values;
+      if (!Array.isArray(values) || values.length === 0) {
+        throw new Error(`Model ${modelName} returned no embedding values.`);
+      }
+
+      console.log(`Successfully used model: ${modelName}`);
+      return values;
+      
+    } catch (err) {
+      lastError = err;
+      console.error(`Model ${modelName} failed:`, err.message);
+      continue; // Try next model
+    }
   }
-
-  return values;
+  
+  // All models failed
+  throw new Error(`All embedding models failed. Last error: ${lastError?.message || 'Unknown error'}. Please check your API key and region availability.`);
 }
 
 export async function embedBatch(texts, batchSize = 5) {

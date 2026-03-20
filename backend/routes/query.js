@@ -1,11 +1,12 @@
 import express from 'express';
 import { retrieveTopChunks, generateAnswer } from '../services/ragService.js';
 import { getChunkCount, getAllChunks } from '../services/firebaseService.js';
+import { authenticateToken } from '../middleware/auth.js';
 
 const router = express.Router();
 
 // POST /api/query/ask
-router.post('/ask', async (req, res) => {
+router.post('/ask', authenticateToken, async (req, res) => {
   try {
     const question = req.body?.question;
     const normalizedQuestion =
@@ -53,7 +54,7 @@ router.post('/ask', async (req, res) => {
 });
 
 // GET /api/query/chunks — for the Chunk Viewer tab (no embeddings, too large)
-router.get('/chunks', async (req, res) => {
+router.get('/chunks', authenticateToken, async (req, res) => {
   try {
     const chunks = await getAllChunks();
     const safe = chunks.map((c) => ({

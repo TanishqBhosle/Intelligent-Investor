@@ -1,11 +1,23 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { embedText } from './embedder.js';
 import { getAllChunks } from './firebaseService.js';
+import dotenv from 'dotenv';
 
-function assertGeminiKey() {
+dotenv.config();
+
+let generationModelInstance = null;
+
+function getGenerationModel() {
+  if (generationModelInstance) return generationModelInstance;
   if (!process.env.GEMINI_API_KEY) {
     throw new Error('Missing GEMINI_API_KEY in environment.');
   }
+
+  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+  generationModelInstance = genAI.getGenerativeModel({
+    model: 'gemini-2.0-flash',
+  });
+  return generationModelInstance;
 }
 
 function cosineSimilarity(a, b) {
@@ -28,11 +40,6 @@ function cosineSimilarity(a, b) {
   const denom = Math.sqrt(normA) * Math.sqrt(normB);
   return denom === 0 ? 0 : dot / denom;
 }
-
-assertGeminiKey();
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const generationModel = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
 export async function retrieveTopChunks(query, topK = 5) {
   if (typeof query !== 'string' || query.trim().length === 0) {
@@ -106,6 +113,7 @@ Answer:`;
     topP: 0.9,
   };
 
+  const generationModel = getGenerationModel();
   const result = await generationModel.generateContent({
     contents: [{ role: 'user', parts: [{ text: prompt }] }],
   }, { generationConfig });

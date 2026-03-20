@@ -1,0 +1,45 @@
+import fs from 'fs';
+
+const envContent = `PORT=5000
+GEMINI_API_KEY=AIzaSyAsfAE2cTUjsEy2B-VRZ6nQrpQl5c1rOyg
+FIREBASE_PROJECT_ID=the-intelligent-investor-d54fd
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----
+MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDRwXzq0LwwkC9x
+Z/YAChUtEVKBo63VAa3GIbO91HslQzA1aDBUt9/oQ4o2bqh3R8oO1u5EhEkFrRYF
+83KMisgu3LKPBYjxP10O5zxMpknF8eTf3U8+EAp0hAGfpRjA3jgc/1yQfMZjnDIf
+4vuXk+rgDOyUZoYfluNyIGiy8j9CbPJIa0IP8ft1eYkYKmfK6h3z9A36rzMOmzQZ
+YyaFOskgqIMv+HVQNYXwBBKs9U46JewJAuV4KYlaK7FOfLZBVgRZjKxsNyDr3CGQ
+dfY2d6wu4wuvKAGZ/FwzxZfaKhrKGl4+3Pa2kEeCY0Rg2taKiNFqoVbzTABqtT83
+2VVDZPwTAgMBAAECggEAAdlyDQNMeCR6o/DV4e001Oy6AgDxR5dYCA8EWIWhlP6x
+KPS4twksqmMXZQsiZXQsFhJoumZCMJB0nmvQPuilrYgY85rfDhAldWauM5d5v2A2
+c4+DeIQdW3v4ebGzygDg6hyJnTqEaJzCx7YxdVuCrs6zsqFEHc4vm4d+n36e9n/J
+ppqFUj3kuAr6uMgbHocC0BdCB6mGlrik1fLiv3P5g8nP30oiLYS2OHr8w1phaifF
+3NDBill7fC8ZwagQkQ5YwRs2s5jFnH7im1DbswG8HF/DBu9RbkaXXcX5fpE7SDbt
+B6nHtP5zIWSQGA5SSzpGJvI36LVmzSwc4wO6RSXeWQKBgQD1aVDVzb3XAlGx/2fE
+esMVpmY0VXITmnspi51HFkNvCpJ3oNStHcJTqhA1YFqqOwopHxiI+e/BqS6dTI9H
+xFdbAGpE2D9WzGifx95SEcLMLW1l30v0DG0u8EdfLvIPrtXiERvhzyuFNCIWfLkx
+9p57eIf6zdtF1oeK4TpSd5CQKwKBgQDazlbuLECQlBLmfL2pKUFj0XkfKdQ7635h
+3UX4Y38VE/Ka6NoIACQCRDxqCIjf3TUBo0XWgJQVqmECPv9sXgVRNIY/DO2U1xcp
+ragZwUZJLZkPdlyEwu9mZrX/uGjq78INAvAZzbO2MSZ0k4lhJBfMzYhBq52xPgvc
+J67CnILnuQKBgQDhj6bonG28TTlhbOqnQF5Ga+bMeyyasAY7rUMlr2TTjtgIdB6F
+7zBJTaoQJTuv8wvnt9kJLRAc468gjNm0kNXponwKQugUk1QmZ8IDlKeCms5OL+rT
+qQhBeD9hUPjTSVL0sdz6szvA9qXOHVzqe043FhWFg+fiTMfP8it02MhaeQKBgF6O
+wV6YXSad9zUIP2Z1X77lbbSb/Q4QDUP5vh1D0k2nmzZ63o6KkQUxu/IO0if8jsWw
+a6PxWQ2r3dR8qSGJ2D5ptoJU8e9arLXkSDspHVjOjdDy07TEEXVtecWTSjQNfQzm
+ciCUls9rmjTS9ZG3aVmmkPXgVnucVr/DnnCX9rJxAoGAZitdLqVOo28EFaqRWIP7
+wabuLX8Dcghwcc5DF9iFVziBIchwJbXzzs+INEb4a0Ry9lUvoKPsPT4HYOeMaf4/
+vfxBtOKPbGDycCvl6Xjdr1KgMexsMM6gT4qJ4Q8cSgqnPWpSFUwCTjCu0+CEIdWY
+h/Diy77HywtJp/rRm1I/cm4=
+-----END PRIVATE KEY-----
+"
+FIREBASE_CLIENT_EMAIL=firebase-adminsdk-fbsvc@the-intelligent-investor-d54fd.iam.gserviceaccount.com
+FRONTEND_URL=http://localhost:5173
+JWT_SECRET=RagSystemSecureKey2024ProductionReady32Chars
+NODE_ENV=development`;
+
+try {
+  fs.writeFileSync('.env', envContent);
+  console.log('✅ .env file updated successfully with Firebase credentials');
+} catch (error) {
+  console.error('❌ Error updating .env file:', error.message);
+}
